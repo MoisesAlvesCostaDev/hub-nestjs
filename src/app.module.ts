@@ -3,6 +3,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CategoryModule } from './category/category.module';
+import { ProductModule } from './product/product.module';
+import { OrderModule } from './order/order.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import * as Joi from '@hapi/joi';
 
 @Module({
@@ -27,6 +31,14 @@ import * as Joi from '@hapi/joi';
         pass: configService.get<string>('MONGO_PASSWORD'),
       }),
     }),
+
+    CategoryModule,
+
+    ProductModule,
+
+    OrderModule,
+
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
