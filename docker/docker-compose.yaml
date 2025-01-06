@@ -39,6 +39,23 @@ services:
       - localstack_data:/var/lib/localstack
       - /var/run/docker.sock:/var/run/docker.sock
 
+  nest-app:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    container_name: nest-app
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DB_NAME=app
+      - MONGO_USER=admin
+      - MONGO_PASSWORD=password123
+      - PAGINATION_DEFAULT_PAGE=1
+      - PAGINATION_DEFAULT_LIMIT=20
+    ports:
+      - '3000:3000'
+    depends_on:
+      - mongodb
+
 volumes:
   mongodb_data:
   localstack_data:
