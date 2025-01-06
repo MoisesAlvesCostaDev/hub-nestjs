@@ -16,7 +16,7 @@ import { UpdateCategoryDto } from './dto/update-category.dto';
 import { ValidateObjectIdPipe } from '../pipes/ValidateObjectIdPipe';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
-@ApiTags('Categorias')
+@ApiTags('Categories')
 @Controller('categories')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}

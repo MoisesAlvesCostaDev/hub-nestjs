@@ -3,8 +3,8 @@ POST http://localhost:3000/categories
 Content-Type: application/json
 
 {
-    "name": "Categoria 11",
-    "description": "Description categoria 11",
+    "name": "Categoria 1",
+    "description": "Description categoria 1",
     "products":[]
 
 }
@@ -28,8 +28,8 @@ GET http://localhost:3000/categories?page=1&limit=2
 
 
 ### Buscar Categoria pelo ID (Get)
-GET http://localhost:3000/categories/677b01e7d5862c0689e1990a
+GET http://localhost:3000/categories/677c40da86f61c7387b74468
 
 ### Deletar Categoria (Delete)
-DELETE http://localhost:3000/categories/677b01e7d5862c0689e1990a
+DELETE http://localhost:3000/categories/677c40da86f61c7387b74468
  

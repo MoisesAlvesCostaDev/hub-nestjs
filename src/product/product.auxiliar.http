@@ -8,7 +8,7 @@ Content-Type: application/json
     "description": "Description of Product a",
     "price": 100,
     "imageUrl": "https://example.com/image.jpg",
-    "categories" : []
+    "categories" : ["677c40ec86f61c7387b7446a"]
 }
 
 ### update 
