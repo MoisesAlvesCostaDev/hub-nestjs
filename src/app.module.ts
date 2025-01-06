@@ -18,6 +18,8 @@ import * as Joi from '@hapi/joi';
         MONGO_DB_NAME: Joi.string().required(),
         MONGO_USER: Joi.string().required(),
         MONGO_PASSWORD: Joi.string().required(),
+        PAGINATION_DEFAULT_PAGE: Joi.number().default(1),
+        PAGINATION_DEFAULT_LIMIT: Joi.number().default(10),
       }),
     }),
 
