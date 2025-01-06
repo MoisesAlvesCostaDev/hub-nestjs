@@ -17,7 +17,7 @@ import { isValidObjectId } from 'mongoose';
 import { ValidateObjectIdPipe } from 'src/pipes/ValidateObjectIdPipe';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
-@ApiTags('Produtos')
+@ApiTags('Products')
 @Controller('products')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
