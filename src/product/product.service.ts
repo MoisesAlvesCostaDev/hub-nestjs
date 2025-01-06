@@ -1,26 +1,139 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
+import { Product } from './schemas/product.schema';
+import { Model } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { Category } from 'src/category/schemas/category.schema';
+import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { getDefaultPagination } from 'src/config/pagination.config';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ProductService {
-  create(createProductDto: CreateProductDto) {
-    return 'This action adds a new product';
+  constructor(
+    @InjectModel(Product.name) private readonly productModel: Model<Product>,
+    @InjectModel(Category.name) private readonly categoryModel: Model<Category>,
+    private readonly configService: ConfigService,
+  ) {}
+
+  async create(createProductDto: CreateProductDto): Promise<Product> {
+    if (createProductDto.categories && createProductDto.categories.length > 0) {
+      const validCategories = await this.categoryModel.find({
+        _id: { $in: createProductDto.categories },
+      });
+
+      if (validCategories.length !== createProductDto.categories.length) {
+        throw new NotFoundException('One or more categories not found');
+      }
+    }
+
+    const product = new this.productModel(createProductDto);
+    const savedProduct = await product.save();
+
+    if (createProductDto.categories && createProductDto.categories.length > 0) {
+      await this.categoryModel.updateMany(
+        { _id: { $in: createProductDto.categories } },
+        { $push: { products: savedProduct._id } },
+      );
+    }
+
+    return savedProduct;
   }
 
-  findAll() {
-    return `This action returns all product`;
+  async findAll(
+    paginationQuery: PaginationQueryDto,
+  ): Promise<{ data: Product[]; total: number; page: number; limit: number }> {
+    const { page, limit } = paginationQuery;
+    const { defaultPage, defaultLimit } = getDefaultPagination(
+      this.configService,
+    );
+
+    const currentPage = page || defaultPage;
+    const currentLimit = limit || defaultLimit;
+
+    const skip = (currentPage - 1) * currentLimit;
+
+    const [data, total] = await Promise.all([
+      this.productModel
+        .find()
+        .skip(skip)
+        .limit(currentLimit)
+        .populate({
+          path: 'categories',
+          model: 'Category',
+          select: 'name',
+        })
+        .exec(),
+      this.productModel.countDocuments(),
+    ]);
+
+    return {
+      data,
+      total,
+      page: currentPage,
+      limit: currentLimit,
+    };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
+  async findOne(id: string): Promise<Product> {
+    const product = await this.productModel
+      .findById(id)
+      .populate({ path: 'categories', model: 'Category', select: 'name' })
+      .exec();
+
+    if (!product) {
+      throw new NotFoundException(`Not found`);
+    }
+
+    return product;
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
-  }
+  async update(
+    id: string,
+    updateProductDto: UpdateProductDto,
+  ): Promise<Product> {
+    const product = await this.productModel.findById(id).exec();
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+    if (!product) {
+      throw new NotFoundException(`Not found`);
+    }
+
+    if (updateProductDto.categories?.length) {
+      await this.categoryModel.updateMany(
+        { _id: { $in: product.categories } },
+        { $pull: { products: product._id } },
+      );
+
+      await this.categoryModel.updateMany(
+        { _id: { $in: updateProductDto.categories } },
+        { $push: { products: product._id } },
+      );
+    }
+
+    const updatedProduct = await this.productModel
+      .findByIdAndUpdate(id, updateProductDto, { new: true })
+      .populate('categories')
+      .exec();
+
+    return updatedProduct;
+  }
+  async remove(id: string): Promise<{ message: string }> {
+    const product = await this.productModel.findById(id).exec();
+
+    if (!product) {
+      throw new NotFoundException(`Not found`);
+    }
+
+    if (product.categories?.length) {
+      await this.categoryModel.updateMany(
+        { _id: { $in: product.categories } },
+        { $pull: { products: product._id } },
+      );
+    }
+
+    await product.deleteOne();
+
+    return { message: `Successfully deleted` };
   }
 }
