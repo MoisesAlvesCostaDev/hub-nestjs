@@ -28,6 +28,7 @@ src/
 - **class-validator** - Validação de objetos e DTOs.
 - **Swagger** - Documentação da API com Swagger UI.
 - **Joi** - Validação de esquemas.
+- **docker-compose** - orquestrador de containers.
 
 ## Instalação
 
@@ -56,7 +57,27 @@ src/
    PAGINATION_DEFAULT_LIMIT=
    ```
 
-4. Inicie o servidor:
+4. suba os serviços para isso acesse a pasta docker e execulte o comando:
+
+   ```bash
+   docker-compose up mongodb mongo-express localstack
+   ```
+
+   Configure o slasticStack S3
+
+   ```bash
+   aws configure
+   ```
+
+   Crie um Bucket
+
+   ```bash
+   aws s3api create-bucket --bucket "nome do bucket" --endpoint-url= url configurada
+   ```
+
+   Ajuste as variaveis de ambiente
+
+5. Na raiz do projeto inicie o servidor de desenvolvimento:
    ```bash
    npm run start:dev
    ```
@@ -71,7 +92,15 @@ npx ts-node scripts/seed.ts
 
 ## Documentação
 
-Para acessar a documentação Swagger
+Para acessar a documentação Swagger acesso o endpoint
 /documentation
+
+## Build
+
+Para rodar o projeto configure as variaveis de ambiente e execulte o comando na pasta docker
+
+```bash
+docker-compose up --build
+```
 
 ---

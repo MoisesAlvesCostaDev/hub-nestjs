@@ -18,6 +18,11 @@ import * as Joi from '@hapi/joi';
         MONGO_PASSWORD: Joi.string().required(),
         PAGINATION_DEFAULT_PAGE: Joi.number().default(1),
         PAGINATION_DEFAULT_LIMIT: Joi.number().default(10),
+        AWS_S3_BUCKET_NAME: Joi.string().required(),
+        AWS_REGION: Joi.string().required(),
+        AWS_ACCESS_KEY_ID: Joi.string().required(),
+        AWS_SECRET_ACCESS_KEY: Joi.string().required(),
+        AWS_S3_ENDPOINT: Joi.string().required(),
       }),
     }),
 
@@ -33,11 +38,8 @@ import * as Joi from '@hapi/joi';
     }),
 
     CategoryModule,
-
     ProductModule,
-
     OrderModule,
-
     DashboardModule,
   ],
   controllers: [],

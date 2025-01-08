@@ -8,14 +8,23 @@ import {
   Delete,
   BadRequestException,
   Query,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiConsumes,
+} from '@nestjs/swagger';
 import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { isValidObjectId } from 'mongoose';
 import { ValidateObjectIdPipe } from 'src/pipes/ValidateObjectIdPipe';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Products')
 @Controller('products')
@@ -23,6 +32,8 @@ export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Post()
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Cria um novo produt' })
   @ApiResponse({
     status: 201,
@@ -33,8 +44,33 @@ export class ProductController {
     status: 400,
     description: 'Erro nos dados enviados.',
   })
-  create(@Body() createProductDto: CreateProductDto) {
-    return this.productService.create(createProductDto);
+  create(
+    @Body() body: CreateProductDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const parsePrice = (price: any): number => {
+      return Number(price);
+    };
+
+    const parseCategories = (categories: any): string[] => {
+      if (typeof categories === 'string') {
+        try {
+          return JSON.parse(categories);
+        } catch (error) {
+          console.error('Error parsing categories string:', error);
+          return [];
+        }
+      }
+      return Array.isArray(categories) ? categories : [];
+    };
+
+    const parsedBody = {
+      ...body,
+      price: parsePrice(body.price),
+      categories: parseCategories(body.categories),
+    };
+
+    return this.productService.create(parsedBody, file);
   }
 
   @Get()
@@ -69,6 +105,8 @@ export class ProductController {
   }
 
   @Patch(':id')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
   @ApiOperation({ summary: 'Atualiza um produt pelo id' })
   @ApiParam({
     name: 'id',
@@ -89,12 +127,36 @@ export class ProductController {
   })
   update(
     @Param('id', ValidateObjectIdPipe) id: string,
-    @Body() updateProductDto: UpdateProductDto,
+    @Body() body: any,
+    @UploadedFile() file: Express.Multer.File,
   ) {
     if (!isValidObjectId(id)) {
       throw new BadRequestException(`Formato de Id inválido`);
     }
-    return this.productService.update(id, updateProductDto);
+
+    const parsePrice = (price: any): number => {
+      return Number(price);
+    };
+
+    const parseCategories = (categories: any): string[] => {
+      if (typeof categories === 'string') {
+        try {
+          return JSON.parse(categories);
+        } catch (error) {
+          console.error('Error parsing categories string:', error);
+          return [];
+        }
+      }
+      return Array.isArray(categories) ? categories : [];
+    };
+
+    const parsedBody = {
+      ...body,
+      price: parsePrice(body.price),
+      categories: parseCategories(body.categories),
+    };
+
+    return this.productService.update(id, parsedBody, file);
   }
 
   @Delete(':id')

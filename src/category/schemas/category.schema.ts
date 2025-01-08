@@ -8,9 +8,6 @@ export class Category extends Document {
   @Prop({ required: true })
   name: string;
 
-  @Prop()
-  description?: string;
-
   @Prop({
     required: true,
     type: [{ type: Types.ObjectId, ref: 'Product' }],

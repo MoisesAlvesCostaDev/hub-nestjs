@@ -62,7 +62,7 @@ export class CategoryService {
         .populate({
           path: 'products',
           model: 'Product',
-          select: 'name price description',
+          select: 'name price description imageUrl',
         })
         .exec(),
       this.categoryModel.countDocuments(),
