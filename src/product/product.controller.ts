@@ -44,7 +44,10 @@ export class ProductController {
     status: 400,
     description: 'Erro nos dados enviados.',
   })
-  create(@Body() body: any, @UploadedFile() file: Express.Multer.File) {
+  create(
+    @Body() body: CreateProductDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     const parsePrice = (price: any): number => {
       return Number(price);
     };

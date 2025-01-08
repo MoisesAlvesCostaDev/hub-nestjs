@@ -63,6 +63,20 @@ src/
    docker-compose up mongodb mongo-express localstack
    ```
 
+   Configure o slasticStack S3
+
+   ```bash
+   aws configure
+   ```
+
+   Crie um Bucket
+
+   ```bash
+   aws s3api create-bucket --bucket "nome do bucket" --endpoint-url= url configurada
+   ```
+
+   Ajuste as variaveis de ambiente
+
 5. Na raiz do projeto inicie o servidor de desenvolvimento:
    ```bash
    npm run start:dev

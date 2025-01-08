@@ -65,4 +65,42 @@ export class DashboardService {
       .exec();
     return products.map((product) => product._id.toString());
   }
+
+  async getDailySales() {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const dailySales = await this.orderModel.aggregate([
+      {
+        $match: {
+          date: {
+            $gte: startOfMonth,
+            $lt: startOfNextMonth,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$date' },
+            month: { $month: '$date' },
+            day: { $dayOfMonth: '$date' },
+          },
+          total: { $sum: '$total' },
+        },
+      },
+      {
+        $sort: { '_id.year': 1, '_id.month': 1, '_id.day': 1 },
+      },
+    ]);
+
+    return dailySales.map((sale) => ({
+      date: new Intl.DateTimeFormat('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).format(new Date(sale._id.year, sale._id.month - 1, sale._id.day)),
+      total: sale.total,
+    }));
+  }
 }

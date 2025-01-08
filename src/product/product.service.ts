@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './schemas/product.schema';
@@ -9,13 +14,15 @@ import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { getDefaultPagination } from 'src/config/pagination.config';
 import { ConfigService } from '@nestjs/config';
 import { S3Service } from 'src/services/s3.service';
-import * as crypto from 'crypto';
+import { randomUUID } from 'crypto';
+import { Order } from 'src/order/schemas/order.schema';
 
 @Injectable()
 export class ProductService {
   constructor(
     @InjectModel(Product.name) private readonly productModel: Model<Product>,
     @InjectModel(Category.name) private readonly categoryModel: Model<Category>,
+    @InjectModel(Order.name) private readonly orderModel: Model<Order>,
     private readonly configService: ConfigService,
     private readonly s3Service: S3Service,
   ) {}
@@ -129,7 +136,7 @@ export class ProductService {
     }
 
     if (file) {
-      const uniqueId = crypto.randomUUID();
+      const uniqueId = randomUUID();
       const fileExtension = file.originalname.split('.').pop();
       const uniqueFileName = `${uniqueId}.${fileExtension}`;
       const uploadResult = await this.s3Service.uploadFile(
@@ -152,6 +159,14 @@ export class ProductService {
 
     if (!product) {
       throw new NotFoundException(`Not found`);
+    }
+
+    const orderWithProduct = await this.orderModel.exists({ products: id });
+
+    if (orderWithProduct) {
+      throw new ConflictException(
+        `Cannot delete product as it is part of an existing order`,
+      );
     }
 
     if (product.categories?.length) {
