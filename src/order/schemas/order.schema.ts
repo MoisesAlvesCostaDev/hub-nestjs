@@ -5,7 +5,7 @@ import { Document, Types } from 'mongoose';
 export class Order extends Document {
   _id: Types.ObjectId;
 
-  @Prop({ required: true, type: Date })
+  @Prop({ required: true, type: Date, default: () => new Date() })
   date: Date;
 
   @Prop({

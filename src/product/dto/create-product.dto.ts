@@ -20,8 +20,9 @@ export class CreateProductDto {
     description: 'Descrição do produto.',
     example: 'Um smartphone moderno com 128GB de armazenamento.',
   })
+  @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @ApiProperty({
     description: 'Preço do produto.',
@@ -32,12 +33,12 @@ export class CreateProductDto {
   price: number;
 
   @ApiPropertyOptional({
-    description: 'URL da imagem do produto.',
+    description: 'URL da imagem associada ao produto.',
     example: 'https://example.com/images/product.jpg',
   })
   @IsOptional()
   @IsString()
-  imageUrl: string;
+  imageUrl?: string;
 
   @ApiPropertyOptional({
     description: 'Lista de IDs das categorias associadas ao produto.',
@@ -47,5 +48,12 @@ export class CreateProductDto {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  categories: string[];
+  categories?: string[];
+
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Arquivo de imagem do produto.',
+  })
+  file?: any;
 }

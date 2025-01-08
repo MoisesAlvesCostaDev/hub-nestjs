@@ -8,6 +8,8 @@ import { Category } from 'src/category/schemas/category.schema';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { getDefaultPagination } from 'src/config/pagination.config';
 import { ConfigService } from '@nestjs/config';
+import { S3Service } from 'src/services/s3.service';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class ProductService {
@@ -15,9 +17,13 @@ export class ProductService {
     @InjectModel(Product.name) private readonly productModel: Model<Product>,
     @InjectModel(Category.name) private readonly categoryModel: Model<Category>,
     private readonly configService: ConfigService,
+    private readonly s3Service: S3Service,
   ) {}
 
-  async create(createProductDto: CreateProductDto): Promise<Product> {
+  async create(
+    createProductDto: CreateProductDto,
+    file?: Express.Multer.File,
+  ): Promise<Product> {
     if (createProductDto.categories && createProductDto.categories.length > 0) {
       const validCategories = await this.categoryModel.find({
         _id: { $in: createProductDto.categories },
@@ -27,11 +33,21 @@ export class ProductService {
         throw new NotFoundException('One or more categories not found');
       }
     }
+    if (file) {
+      const uniqueId = crypto.randomUUID();
+      const fileExtension = file.originalname.split('.').pop();
+      const uniqueFileName = `${uniqueId}.${fileExtension}`;
+      const uploadResult = await this.s3Service.uploadFile(
+        file,
+        uniqueFileName,
+      );
+      createProductDto.imageUrl = uploadResult.Location;
+    }
 
     const product = new this.productModel(createProductDto);
     const savedProduct = await product.save();
 
-    if (createProductDto.categories && createProductDto.categories.length > 0) {
+    if (createProductDto.categories?.length) {
       await this.categoryModel.updateMany(
         { _id: { $in: createProductDto.categories } },
         { $push: { products: savedProduct._id } },
@@ -92,6 +108,7 @@ export class ProductService {
   async update(
     id: string,
     updateProductDto: UpdateProductDto,
+    file?: Express.Multer.File,
   ): Promise<Product> {
     const product = await this.productModel.findById(id).exec();
 
@@ -111,6 +128,17 @@ export class ProductService {
       );
     }
 
+    if (file) {
+      const uniqueId = crypto.randomUUID();
+      const fileExtension = file.originalname.split('.').pop();
+      const uniqueFileName = `${uniqueId}.${fileExtension}`;
+      const uploadResult = await this.s3Service.uploadFile(
+        file,
+        uniqueFileName,
+      );
+      updateProductDto.imageUrl = uploadResult.Location;
+    }
+
     const updatedProduct = await this.productModel
       .findByIdAndUpdate(id, updateProductDto, { new: true })
       .populate('categories')
@@ -118,6 +146,7 @@ export class ProductService {
 
     return updatedProduct;
   }
+
   async remove(id: string): Promise<{ message: string }> {
     const product = await this.productModel.findById(id).exec();
 

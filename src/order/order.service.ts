@@ -7,16 +7,38 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ConfigService } from '@nestjs/config';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { getDefaultPagination } from 'src/config/pagination.config';
+import { Product } from 'src/product/schemas/product.schema';
 
 @Injectable()
 export class OrderService {
   constructor(
     @InjectModel(Order.name) private readonly orderModel: Model<Order>,
+    @InjectModel(Product.name) private readonly productModel: Model<Product>,
     private readonly configService: ConfigService,
   ) {}
 
   async create(createOrderDto: CreateOrderDto): Promise<Order> {
-    const order = new this.orderModel(createOrderDto);
+    const { products } = createOrderDto;
+
+    const productDetails = await this.productModel
+      .find({ _id: { $in: products } })
+      .exec();
+
+    if (productDetails.length !== products.length) {
+      throw new Error('Um ou mais produtos não foram encontrados');
+    }
+
+    const total = productDetails.reduce(
+      (sum, product) => sum + product.price,
+      0,
+    );
+
+    const order = new this.orderModel({
+      ...createOrderDto,
+      date: new Date(),
+      total,
+    });
+
     return await order.save();
   }
 
